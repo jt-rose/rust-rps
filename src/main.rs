@@ -82,7 +82,8 @@ impl GameStats {
     pub fn update_game_results(&mut self, result: GAME_RESULT) {
         match result {
             GAME_RESULT::Win => self.wins += 1,
-            GAME_RESULT::Loss => self.losses += 1
+            GAME_RESULT::Loss => self.losses += 1,
+            GAME_RESULT::Tie => self.ties += 1,
         }
     }
 
