@@ -1,3 +1,5 @@
+use rand::Rng;
+
 fn main() {
     println!("Hello, world!");
 }
@@ -11,20 +13,55 @@ enum RSP_CHOICE {
 
 enum GAME_RESULT {
     Win,
-    Loss
+    Loss,
+    Tie
 }
 
 // stub out major functions
 fn get_user_choice() {}
 
-fn get_ai_choice() {}
+// randomly generate an RSP choice
+fn get_ai_choice() -> RSP_CHOICE {
+    let num = rand::thread_rng().gen_range(0..2);
+    match num {
+        0 => RSP_CHOICE::Rock,
+        1 => RSP_CHOICE::Paper,
+        2 => RSP_CHOICE::Scissors
+    }
+}
 
-fn compare_choices() {}
+// compare user and ai choices and declare win / loss
+fn get_game_result(user_choice: RSP_CHOICE, ai_choice: RSP_CHOICE) -> GAME_RESULT {
+    match user_choice {
+        RSP_CHOICE::Rock => {
+            match ai_choice {
+                RSP_CHOICE::Rock => GAME_RESULT::Tie,
+                RSP_CHOICE::Paper => GAME_RESULT::Loss,
+                RSP_CHOICE::Scissors => GAME_RESULT::Win,
+            }
+        },
+        RSP_CHOICE::Paper => {
+            match ai_choice {
+                RSP_CHOICE::Rock => GAME_RESULT::Win,
+                RSP_CHOICE::Paper => GAME_RESULT::Tie,
+                RSP_CHOICE::Scissors => GAME_RESULT::Loss,
+            }
+        },
+        RSP_CHOICE::Scissors => {
+            match ai_choice {
+                RSP_CHOICE::Rock => GAME_RESULT::Loss,
+                RSP_CHOICE::Paper => GAME_RESULT::Win,
+                RSP_CHOICE::Scissors => GAME_RESULT::Tie,
+            }
+        }
+    }
+}
 
 // store info on game stats
 pub struct GameStats {
     wins: i8,
     losses: i8,
+    ties: i8,
     rock_picks: i16,
     paper_picks: i16,
     scissor_picks: i16,
@@ -35,6 +72,7 @@ impl GameStats {
         Self {
             wins: 0,
             losses: 0,
+            ties: 0,
             rock_picks: 0,
             paper_picks: 0,
             scissor_picks: 0
