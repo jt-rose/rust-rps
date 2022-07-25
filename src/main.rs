@@ -3,7 +3,7 @@ fn main() {
 }
 
 // declare game enums
-enum RSP {
+enum RSP_CHOICE {
     Rock,
     Paper,
     Scissors
@@ -48,7 +48,15 @@ impl GameStats {
         }
     }
 
-    pub fn get_result_ratio() {}
+    pub fn get_result_ratio(&self) -> i8 {
+        self.wins - self.losses
+    }
 
-    pub fn update_player_choice_stats() {}
+    pub fn update_player_choice_stats(&mut self, choice: RSP_CHOICE ) {
+        match choice {
+            RSP_CHOICE::Rock => self.rock_picks += 1,
+            RSP_CHOICE::Paper => self.paper_picks_picks += 1,
+            RSP_CHOICE::Scissors => self.scissor_picks_picks += 1,
+        }
+    }
 }
