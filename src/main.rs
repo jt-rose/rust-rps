@@ -1,4 +1,4 @@
-use std::io;
+use std::{fmt, io};
 use rand::Rng;
 
 fn main() {
@@ -18,20 +18,20 @@ fn main() {
 
             let ai_choice = get_ai_choice();
 
-            let round_summary = "You played " + &player_choice + " and the computer played " + &ai_choice;
+            let round_summary = format!("You played {} and the computer played {}", &player_choice, &ai_choice);
             let round_result = get_game_result(player_choice, ai_choice);
 
             // update round stats and provide message
             match round_result {
-                GAME_RESULT::Win => {
+                GameResult::Win => {
                     rounds_won += 1;
                     println!("{} - You won!", round_summary);
                 },
-                GAME_RESULT::Loss => {
+                GameResult::Loss => {
                     rounds_lost += 1;
                     println!("{} - You lost!", round_summary);
                 },
-                GAME_RESULT::Tie => {
+                GameResult::Tie => {
                     rounds_tied += 1;
                     println!("{} - You tied!", round_summary);
                 }
@@ -41,82 +41,101 @@ fn main() {
         // calculate win / loss across rounds
         if rounds_won > rounds_lost {
             println!("CONGRATS! You won the game!");
-            game_stats.update_game_results(&GAME_RESULT::Win);
+            game_stats.update_game_results(&GameResult::Win);
         } else if rounds_lost > rounds_won {
             println!("Oh no! You lost the game!");
-            game_stats.update_game_results(&GAME_RESULT::Loss);
+            game_stats.update_game_results(&GameResult::Loss);
         } else {
             println!("The game ended in a tie!");
-            game_stats.update_game_results(&GAME_RESULT::Tie);
+            game_stats.update_game_results(&GameResult::Tie);
         }
 
         // print current game stats
+        game_stats.print_game_stats();
 
         // ask player if they want to keep playing
 
-        println!("Would you like to keep playing - y / n ?")
+        println!("Would you like to keep playing?");
+        println!("press q to quit or any key to keep going");
+
+        let mut press_continue = String::new();
+        io::stdin().read_line(&mut press_continue).expect("failed to read user input");
+        if press_continue.trim() == "q" {
+            println!("Thanks for playing!");
+            keep_playing = false;
+        }
 
     }
 }
 
 // declare game enums
-enum RSP_CHOICE {
+pub enum RspChoice {
     Rock,
     Paper,
     Scissors
 }
+impl fmt::Display for RspChoice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            RspChoice::Rock => write!(f, "Rock"),
+            RspChoice::Paper => write!(f, "Paper"),
+            RspChoice::Scissors => write!(f, "Scissors"),
+        }
+    }
+}
 
-enum GAME_RESULT {
+pub enum GameResult {
     Win,
     Loss,
     Tie
 }
 
 // stub out major functions
-fn get_user_choice() -> RSP_CHOICE {
+fn get_user_choice() -> RspChoice {
     println!("Select: r - rock, p - paper, s - scissors");
     let mut choice = String::new();
     io::stdin().read_line(&mut choice).expect("failed to read user input");
-    match choice {
-        &"r" => RSP_CHOICE::Rock,
-        &"s" => RSP_CHOICE::Scissors,
-        &"p" => RSP_CHOICE::Paper,
+    match choice.trim() {
+        "r" => RspChoice::Rock,
+        "s" => RspChoice::Scissors,
+        "p" => RspChoice::Paper,
         _ => get_user_choice()
     }
 }
 
 // randomly generate an RSP choice
-fn get_ai_choice() -> RSP_CHOICE {
+fn get_ai_choice() -> RspChoice {
     let num = rand::thread_rng().gen_range(0..2);
     match num {
-        0 => RSP_CHOICE::Rock,
-        1 => RSP_CHOICE::Paper,
-        2 => RSP_CHOICE::Scissors
+        0 => RspChoice::Rock,
+        1 => RspChoice::Paper,
+        2 => RspChoice::Scissors,
+        _ => panic!("Error: out-of-range value for random number between 0 - 2")
     }
 }
 
 // compare user and ai choices and declare win / loss
-fn get_game_result(user_choice: RSP_CHOICE, ai_choice: RSP_CHOICE) -> GAME_RESULT {
+fn get_game_result(user_choice: RspChoice, ai_choice: RspChoice) -> GameResult {
     match user_choice {
-        RSP_CHOICE::Rock => {
+        RspChoice::Rock => {
             match ai_choice {
-                RSP_CHOICE::Rock => GAME_RESULT::Tie,
-                RSP_CHOICE::Paper => GAME_RESULT::Loss,
-                RSP_CHOICE::Scissors => GAME_RESULT::Win,
+                RspChoice::Rock => GameResult::Tie,
+                RspChoice::Paper => GameResult::Loss,
+                RspChoice::Scissors => GameResult::Win,
             }
         },
-        RSP_CHOICE::Paper => {
+        RspChoice::Paper => {
             match ai_choice {
-                RSP_CHOICE::Rock => GAME_RESULT::Win,
-                RSP_CHOICE::Paper => GAME_RESULT::Tie,
-                RSP_CHOICE::Scissors => GAME_RESULT::Loss,
+                RspChoice::Rock => GameResult::Win,
+                RspChoice::Paper => GameResult::Tie,
+                RspChoice::Scissors => GameResult::Loss,
             }
         },
-        RSP_CHOICE::Scissors => {
+        RspChoice::Scissors => {
             match ai_choice {
-                RSP_CHOICE::Rock => GAME_RESULT::Loss,
-                RSP_CHOICE::Paper => GAME_RESULT::Win,
-                RSP_CHOICE::Scissors => GAME_RESULT::Tie,
+                RspChoice::Rock => GameResult::Loss,
+                RspChoice::Paper => GameResult::Win,
+                RspChoice::Scissors => GameResult::Tie,
             }
         }
     }
@@ -144,23 +163,29 @@ impl GameStats {
         }
     }
 
-    pub fn update_game_results(&mut self, result: &GAME_RESULT) {
+    pub fn update_game_results(&mut self, result: &GameResult) {
         match result {
-            GAME_RESULT::Win => self.wins += 1,
-            GAME_RESULT::Loss => self.losses += 1,
-            GAME_RESULT::Tie => self.ties += 1,
+            GameResult::Win => self.wins += 1,
+            GameResult::Loss => self.losses += 1,
+            GameResult::Tie => self.ties += 1,
         }
     }
 
     pub fn get_win_ratio(&self) -> i8 {
-        self.wins - (self.losses + self.ties)
+        let total_games = self.wins + self.losses + self.ties;
+        if self.wins == 0 {
+            0
+        } else {
+            let ratio = (self.wins * 100) / total_games;
+            ratio
+        }
     }
 
-    pub fn update_player_choice_stats(&mut self, choice: &RSP_CHOICE ) {
+    pub fn update_player_choice_stats(&mut self, choice: &RspChoice) {
         match choice {
-            RSP_CHOICE::Rock => self.rock_picks += 1,
-            RSP_CHOICE::Paper => self.paper_picks_picks += 1,
-            RSP_CHOICE::Scissors => self.scissor_picks_picks += 1,
+            RspChoice::Rock => self.rock_picks += 1,
+            RspChoice::Paper => self.paper_picks += 1,
+            RspChoice::Scissors => self.scissor_picks += 1,
         }
     }
 
